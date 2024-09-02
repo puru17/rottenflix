@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Movie Rater</title>
+    <style>
+        /* Add your CSS styles here */
+    </style>
+</head>
+<body>
+    <video id="camera" autoplay></video>
+    <button id="capture">Capture</button>
+    <div id="result"></div>
+
+    <script>
+        const video = document.getElementById('camera');
+        const captureButton = document.getElementById('capture');
+        const resultDiv = document.getElementById('result');
+
+        // Access the camera
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        }
+
+        // Capture image and send to backend
+        async function captureAndRecognize() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+            
+            const response = await fetch('/recognize', {
+                method: 'POST',
+                body: imageBlob
+            });
+            
+            const movieInfo = await response.json();
+            resultDiv.textContent = `Movie: ${movieInfo.title}, Rotten Tomatoes Score: ${movieInfo.rotten_tomatoes_score}`;
+        }
+
+        setupCamera();
+        captureButton.addEventListener('click', captureAndRecognize);
+    </script>
+</body>
+</html>
